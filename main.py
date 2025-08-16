@@ -60,3 +60,38 @@ with st.form("form-producto", clear_on_submit=True):
     en_venta_label = st.radio("¿El producto está en venta?", options=["Sí", "No"], horizontal=True)
 
     submitted = st.form_submit_button("Guardar")
+if submitted:
+    try:
+        nombre_val, precio_val, categorias_val, en_venta_val = validate(nombre, precio, categorias, en_venta_label)
+
+        df = load_df()
+        nuevo_producto = {
+            "nombre": nombre_val,
+            "precio": precio_val,
+            "categorias": ", ".join(categorias_val),
+            "en_venta": en_venta_val,
+            "ts": datetime.now().isoformat(timespec="seconds")
+        }
+        df = pd.concat([df, pd.DataFrame([nuevo_producto])], ignore_index=True)
+
+        ensure_dir()
+        df.to_csv(CSV_PATH, index=False, encoding="utf-8")
+
+        st.success("✅ Producto guardado exitosamente.")
+
+    except ValueError as e:
+        mensaje_error = str(e)
+        campo = ""
+        if "nombre" in mensaje_error.lower():
+            campo = "nombre"
+        elif "precio" in mensaje_error.lower():
+            campo = "precio"
+        elif "categoría" in mensaje_error.lower():
+            campo = "categorías"
+        elif "venta" in mensaje_error.lower():
+            campo = "¿está en venta?"
+
+        if campo:
+            st.error(f"❌ Mensaje: Por favor verifique el campo del {campo}")
+        else:
+            st.error(f"❌ Mensaje: {mensaje_error}")
